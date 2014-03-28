@@ -117,13 +117,17 @@ class HTTP:
     # internal
 
     def __init__(self):
-        self._contexts = [HTTP.Context(self)]
+        self._contexts = []
         self._named_contexts = {"Default": 0}
-        self._current_context = 0
+        self._current_context = -1
 
     @property
     def context(self):
-        return self._contexts[self._current_context]
+        if len(self._contexts) != 0:
+            return self._contexts[self._current_context]
+        else:
+            raise Exception(
+                'Not connected to any HTTP Host. Use "Create HTTP Context" keyword first.')
 
     @property
     def app(self):
@@ -201,6 +205,7 @@ class HTTP:
         self._contexts.append(context)
         index = self._contexts.index(context)
         self._named_contexts[name] = index
+        self._current_context = index
 
 
     def restore_http_context(self):
@@ -210,7 +215,7 @@ class HTTP:
         """
         if len(self._contexts) > 0:
             self._contexts.pop()
-            self._current_context = len(self._contexts)-1
+            self._current_context = -1
         else:
             raise Exception('No HTTP context defined')
 
@@ -222,7 +227,7 @@ class HTTP:
 
         if (name == ''):
             # Switch to last context on the stack
-            self._current_context = len(self._contexts)-1
+            self._current_context = -1
             return
 
         if (name not in self._named_contexts.keys()):
