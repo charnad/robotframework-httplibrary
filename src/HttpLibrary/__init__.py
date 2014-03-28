@@ -123,7 +123,7 @@ class HTTP:
 
     @property
     def context(self):
-        return self._contexts[-1]
+        return self._contexts[self._current_context]
 
     @property
     def app(self):
