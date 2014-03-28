@@ -181,6 +181,7 @@ class HTTP:
         logger.info("Host for next HTTP request set to '%s'" % host)
         logger.info("Scheme for next HTTP request set to '%s'" % scheme)
         self._contexts.append(HTTP.Context(self, host, scheme))
+        self._current_context = -1
 
     def create_named_http_context(self, name, host=None, scheme='http'):
         """
