@@ -118,6 +118,8 @@ class HTTP:
 
     def __init__(self):
         self._contexts = [HTTP.Context(self)]
+        self._named_contexts = {"Default": 0}
+        self._current_context = 0
 
     @property
     def context(self):
@@ -176,12 +178,57 @@ class HTTP:
         logger.info("Scheme for next HTTP request set to '%s'" % scheme)
         self._contexts.append(HTTP.Context(self, host, scheme))
 
+    def create_named_http_context(self, name, host=None, scheme='http'):
+        """
+        Sets the HTTP host to use for future requests. You must call this
+        before issuing any HTTP requests. Has a name, which can be used
+        for switching between contexts
+
+        `name` is the name of the context (e.g. 'admin', 'user')
+        `host` is the name of the host, optionally with port (e.g. 'google.com' or 'localhost:5984')
+        `scheme` the protocol scheme to use. Valid values are 'http', 'https'
+        """
+
+        assert scheme in (
+            'http', 'https'), "`scheme` parameter must be 'http' or 'https'"
+
+        if host == None:
+            host = self.context.app.host
+        logger.info("Host for next HTTP request set to '%s'" % host)
+        logger.info("Scheme for next HTTP request set to '%s'" % scheme)
+
+        context = HTTP.Context(self, host, scheme)
+        self._contexts.append(context)
+        index = self._contexts.index(context)
+        self._named_contexts[name] = index
+
+
     def restore_http_context(self):
         """
         Restores HttpLibrary's state to the point before the last "Create Http
         Context" call.
         """
-        self._contexts.pop()
+        if len(self._contexts) > 0:
+            self._contexts.pop()
+            self._current_context = len(self._contexts)-1
+        else:
+            raise Exception('No HTTP context defined')
+
+    def switch_http_context(self, name = ''):
+        """
+        Switches current context to a context with specified name, does not
+        remove any contexts from the stack
+        """
+
+        if (name == ''):
+            # Switch to last context on the stack
+            self._current_context = len(self._contexts)-1
+            return
+
+        if (name not in self._named_contexts.keys()):
+            raise Exception('No context with this name')
+
+        self._current_context = self._named_contexts[name]
 
     # request
 
